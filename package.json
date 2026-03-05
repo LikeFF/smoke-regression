@@ -1,0 +1,21 @@
+{
+  "name": "smoke-regression",
+  "version": "1.0.0",
+  "description": "Visual regression testing with Playwright across multiple resolutions",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "npx playwright test",
+    "test:update": "npx playwright test --update-snapshots",
+    "test:report": "npx playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  },
+  "type": "commonjs"
+}
