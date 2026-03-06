@@ -1,0 +1,109 @@
+name: Playwright Visual Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: 'Update visual snapshots?'
+        type: boolean
+        default: false
+      test_file:
+        description: 'Specific test file to run (e.g., visual.spec.ts). Leave empty for all.'
+        type: string
+        default: ''
+      test_name:
+        description: 'Specific test name (grep pattern). Leave empty for all tests in the file.'
+        type: string
+        default: ''
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # Needed to push updated snapshots and publish to gh-pages
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Fetch all history for all branches and tags
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+
+    - name: Run Playwright tests
+      run: |
+        CMD="npx playwright test"
+        
+        if [ "${{ github.event.inputs.update_snapshots }}" == "true" ]; then
+          CMD="$CMD --update-snapshots"
+        fi
+        
+        if [ -n "${{ github.event.inputs.test_file }}" ]; then
+          CMD="$CMD ${{ github.event.inputs.test_file }}"
+        fi
+        
+        if [ -n "${{ github.event.inputs.test_name }}" ]; then
+          CMD="$CMD -g \"${{ github.event.inputs.test_name }}\""
+        fi
+        
+        echo "Running: $CMD"
+        eval $CMD
+        
+    - name: Commit and push updated snapshots
+      if: ${{ github.event.inputs.update_snapshots == 'true' }}
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add .
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update visual snapshots" && git push)
+
+    - name: Upload Playwright Report to Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 5
+
+    - name: Setup gh-pages environment
+      if: always()
+      run: |
+        # Create a unique folder name based on the run number
+        export REPORT_DIR="run-${{ github.run_number }}"
+        mkdir -p gh-pages-deploy/$REPORT_DIR
+        cp -r playwright-report/* gh-pages-deploy/$REPORT_DIR/
+        
+        # Create a simple index.html redirecting to the latest run
+        echo "<!DOCTYPE html><html><head><meta http-equiv=\"refresh\" content=\"0; url=./$REPORT_DIR/index.html\" /></head><body><p>Redirecting to the latest report...</p></body></html>" > gh-pages-deploy/index.html
+
+    - name: Deploy report to GitHub Pages
+      if: always()
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./gh-pages-deploy
+        keep_files: true # Important: keep older reports
+
+    - name: Keep only last 15 reports
+      if: always()
+      run: |
+        git fetch origin gh-pages
+        git checkout gh-pages
+        
+        # Find all run-* directories, sort them numerically, and delete all but the last 15
+        ls -d run-* | sort -V | head -n -15 | xargs -r rm -rf
+        
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add .
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Cleanup old reports [skip ci]" && git push)
