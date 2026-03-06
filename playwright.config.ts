@@ -24,7 +24,7 @@ export default defineConfig({
     timeout: 90000,
     /* Run tests in files in parallel */
     fullyParallel: true,
-    reporter: 'html',
+    reporter: [['html', { open: 'never' }]],
 
     /* Global expect settings */
     expect: {
