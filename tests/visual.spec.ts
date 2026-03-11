@@ -39,16 +39,34 @@ export async function takeStableScreenshot(page: Page, name: string, options: St
 
     // 1. Force scroll to bottom to trigger all lazy-loaded content
     await page.evaluate(async () => {
+        // Pre-emptively disable browser-level lazy loading for all images
+        document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+            img.setAttribute('loading', 'eager');
+        });
+
+        // HP specifically often uses data-src. Force them into the src attribute immediately
+        document.querySelectorAll<HTMLImageElement>('img[data-src]').forEach(img => {
+            if (!img.src || img.src.includes('data:image')) {
+                img.src = img.getAttribute('data-src') || '';
+            }
+        });
+
         await new Promise<void>((resolve) => {
             let totalHeight = 0;
-            const distance = 500;
+            // Use smaller steps (150px) to ensure IntersectionObservers have time to trigger
+            const distance = 150;
             const timer = setInterval(() => {
                 window.scrollBy(0, distance);
                 totalHeight += distance;
+
+                // Compare against document.body.scrollHeight to check if we hit the bottom
                 if (totalHeight >= document.body.scrollHeight) {
                     clearInterval(timer);
-                    window.scrollTo(0, 0); // Scroll back to top
-                    resolve();
+                    // Add a tiny extra delay at the bottom before snapping back
+                    setTimeout(() => {
+                        window.scrollTo(0, 0);
+                        resolve();
+                    }, 500);
                 }
             }, 100);
         });
