@@ -22,6 +22,7 @@ export interface StableScreenshotOptions {
     maskLargeImages?: boolean; // Set to false if you want to test the actual image content
     minImageWidth?: number;
     minImageHeight?: number;
+    maxDiffPixelRatio?: number; // Optional custom variance for pages with unavoidable pixel shifting
 }
 
 /**
@@ -29,7 +30,12 @@ export interface StableScreenshotOptions {
  * Resolves lazy loading, freezes animations, and heuristically masks large dynamic images.
  */
 export async function takeStableScreenshot(page: Page, name: string, options: StableScreenshotOptions = {}) {
-    const { maskLargeImages = true, minImageWidth = 150, minImageHeight = 150 } = options;
+    const {
+        maskLargeImages = true,
+        minImageWidth = 150,
+        minImageHeight = 150,
+        maxDiffPixelRatio
+    } = options;
 
     // 1. Force scroll to bottom to trigger all lazy-loaded content
     await page.evaluate(async () => {
@@ -111,6 +117,7 @@ export async function takeStableScreenshot(page: Page, name: string, options: St
         fullPage: true,
         mask: locatorsToMask,
         timeout: 60000,
+        ...(maxDiffPixelRatio !== undefined && { maxDiffPixelRatio })
     });
 }
 
@@ -134,49 +141,17 @@ test('SMOKE:HCSv2 + ContentAccordion + BasicTabsSquare + GridContainer', async (
     });
 });
 
-/* test('Smoke: LCS+BasicBanner+UseCaseDrawer+PortViewerv2+SecNav+VCS+ProdModule', async ({ page }) => {
+test('Smoke: LCS+BasicBanner+UseCaseDrawer+PortViewerv2+SecNav+VCS+ProdModule', async ({ page }) => {
     await page.goto('https://publish-stage.hp.com/content/hp-com/au-en/laptops/envy/envy-15-laptop.html', {
         waitUntil: 'domcontentloaded',
     });
 
-    // Scroll to bottom to trigger all lazy-loaded images and content
-    await page.evaluate(async () => {
-        await new Promise<void>((resolve) => {
-            let totalHeight = 0;
-            const distance = 500;
-            const timer = setInterval(() => {
-                window.scrollBy(0, distance);
-                totalHeight += distance;
-                if (totalHeight >= document.body.scrollHeight) {
-                    clearInterval(timer);
-                    window.scrollTo(0, 0); // Scroll back to top
-                    resolve();
-                }
-            }, 100);
-        });
+    // The takeStableScreenshot utility handles scrolling, lazy-loading waits, and freezing animations.
+    // We apply maskLargeImages to hide dynamic promotional images that change often.
+    await takeStableScreenshot(page, 'envy-15-laptop.png', {
+        maskLargeImages: true,
+        minImageWidth: 150,
+        minImageHeight: 150,
+        maxDiffPixelRatio: 0.02
     });
-
-    // Wait for all content to fully render after scrolling
-    await page.waitForTimeout(5000);
-
-    // Freeze all animations, transitions, and carousels to stabilize the page
-    await page.addStyleTag({
-        content: `
-            *, *::before, *::after {
-                animation: none !important;
-                transition: none !important;
-                animation-delay: 0s !important;
-                transition-delay: 0s !important;
-            }
-            video { display: none !important; }
-        `,
-    });
-
-    await page.waitForTimeout(1000);
-
-    await expect(page).toHaveScreenshot('envy-15-laptop.png', {
-        fullPage: true,
-        timeout: 60000,
-        maxDiffPixelRatio: 0.02, // This page has persistent subtle animations
-    });
-}); */
+});
