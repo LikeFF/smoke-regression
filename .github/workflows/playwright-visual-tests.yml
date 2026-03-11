@@ -97,11 +97,18 @@ jobs:
     - name: Keep only last 15 reports
       if: always()
       run: |
+        # Clean up untracked artifacts to prevent checkout conflicts
+        rm -rf gh-pages-deploy playwright-report test-results
+        
         git fetch origin gh-pages
-        git checkout gh-pages
+        git checkout --force gh-pages
+        git clean -fd
         
         # Find all run-* directories, sort them numerically, and delete all but the last 15
-        ls -d run-* | sort -V | head -n -15 | xargs -r rm -rf
+        DIR_COUNT=$(ls -1d run-* 2>/dev/null | wc -l)
+        if [ "$DIR_COUNT" -gt 15 ]; then
+          ls -1d run-* | sort -V | head -n -15 | xargs rm -rf
+        fi
         
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
