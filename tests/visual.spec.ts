@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 /**
  * Visual Regression Tests
@@ -18,15 +18,107 @@ import { test, expect } from '@playwright/test';
  * 4. Run: npx playwright test --update-snapshots  (to generate baselines)
  */
 
+export interface StableScreenshotOptions {
+    maskLargeImages?: boolean; // Set to false if you want to test the actual image content
+    minImageWidth?: number;
+    minImageHeight?: number;
+}
+
+/**
+ * Helper function to ensure screenshots are stable. 
+ * Resolves lazy loading, freezes animations, and heuristically masks large dynamic images.
+ */
+export async function takeStableScreenshot(page: Page, name: string, options: StableScreenshotOptions = {}) {
+    const { maskLargeImages = true, minImageWidth = 150, minImageHeight = 150 } = options;
+
+    // 1. Force scroll to bottom to trigger all lazy-loaded content
+    await page.evaluate(async () => {
+        await new Promise<void>((resolve) => {
+            let totalHeight = 0;
+            const distance = 500;
+            const timer = setInterval(() => {
+                window.scrollBy(0, distance);
+                totalHeight += distance;
+                if (totalHeight >= document.body.scrollHeight) {
+                    clearInterval(timer);
+                    window.scrollTo(0, 0); // Scroll back to top
+                    resolve();
+                }
+            }, 100);
+        });
+    });
+
+    // 2. Wait for all <img> tags to finish downloading before calculating sizes (with timeout safety)
+    await page.evaluate(async () => {
+        const images = Array.from(document.querySelectorAll('img'));
+        const promises = images.map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise((resolve) => {
+                // Resolve on load or error
+                img.addEventListener('load', resolve, { once: true });
+                img.addEventListener('error', resolve, { once: true });
+
+                // Fallback: don't wait forever for broken/hanging images (max 5s per image)
+                setTimeout(resolve, 5000);
+            });
+        });
+        await Promise.all(promises);
+    });
+
+    // 3. Freeze all animations and transitions
+    await page.addStyleTag({
+        content: `
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                animation-delay: 0s !important;
+                transition-delay: 0s !important;
+            }
+            video, iframe { display: none !important; }
+        `,
+    });
+
+    // Extra tick for CSS application
+    await page.waitForTimeout(500);
+
+    // 4. Find dynamic content to mask based on calculated sizes
+    const locatorsToMask = [];
+
+    // Always mask videos and iframes
+    locatorsToMask.push(page.locator('video, iframe'));
+
+    if (maskLargeImages) {
+        const images = page.locator('img');
+        const count = await images.count();
+        for (let i = 0; i < count; i++) {
+            const imgLocator = images.nth(i);
+            const box = await imgLocator.boundingBox();
+
+            // Mask only images greater than threshold, AND ensure they are currently visible
+            // Hidden images (like secondary tabs in an Accordion) shouldn't be masked
+            // or they might draw a mask over their parent container's coordinates
+            if (box && box.width >= minImageWidth && box.height >= minImageHeight) {
+                const isVisible = await imgLocator.isVisible();
+                if (isVisible) {
+                    locatorsToMask.push(imgLocator);
+                }
+            }
+        }
+    }
+
+    // 5. Take the screenshot
+    await expect(page).toHaveScreenshot(name, {
+        fullPage: true,
+        mask: locatorsToMask,
+        timeout: 60000,
+    });
+}
+
 test('homepage visual regression', async ({ page }) => {
-    // Navigate to the page you want to capture
     await page.goto('https://playwright.dev/');
 
-    // Take a full-page screenshot and compare with baseline
-    // The screenshot name will be used as the filename inside each resolution folder
-    await expect(page).toHaveScreenshot('homepage.png', {
-        fullPage: true, // Captures the full scrolling page
-    });
+    // For the homepage, we might want to test its structure and ignore large dynamic banners.
+    await takeStableScreenshot(page, 'homepage.png', { maskLargeImages: true });
 });
 
 test('SMOKE:HCSv2 + ContentAccordion + BasicTabsSquare + GridContainer', async ({ page }) => {
@@ -34,12 +126,11 @@ test('SMOKE:HCSv2 + ContentAccordion + BasicTabsSquare + GridContainer', async (
         waitUntil: 'domcontentloaded',
     });
 
-    // Wait for page content to render and animations to settle
-    await page.waitForTimeout(5000);
-
-    await expect(page).toHaveScreenshot('industrial-digital-presses.png', {
-        fullPage: true,
-        timeout: 30000, // Allow more time for stable screenshot on dynamic pages
+    // This is a layout test where we don't care about the large image content, only the layout structure.
+    await takeStableScreenshot(page, 'industrial-digital-presses.png', {
+        maskLargeImages: true,
+        minImageWidth: 150,
+        minImageHeight: 150
     });
 });
 
