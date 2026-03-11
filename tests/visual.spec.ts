@@ -143,7 +143,7 @@ test('homepage visual regression', async ({ page }) => {
     await page.goto('https://playwright.dev/');
 
     // For the homepage, we might want to test its structure and ignore large dynamic banners.
-    await takeStableScreenshot(page, 'homepage.png', { maskLargeImages: true });
+    await takeStableScreenshot(page, 'homepage.png', { maskLargeImages: false });
 });
 
 test('SMOKE:HCSv2 + ContentAccordion + BasicTabsSquare + GridContainer', async ({ page }) => {
@@ -153,7 +153,7 @@ test('SMOKE:HCSv2 + ContentAccordion + BasicTabsSquare + GridContainer', async (
 
     // This is a layout test where we don't care about the large image content, only the layout structure.
     await takeStableScreenshot(page, 'industrial-digital-presses.png', {
-        maskLargeImages: true,
+        maskLargeImages: false,
         minImageWidth: 150,
         minImageHeight: 150
     });
@@ -167,7 +167,7 @@ test('Smoke: LCS+BasicBanner+UseCaseDrawer+PortViewerv2+SecNav+VCS+ProdModule', 
     // The takeStableScreenshot utility handles scrolling, lazy-loading waits, and freezing animations.
     // We apply maskLargeImages to hide dynamic promotional images that change often.
     await takeStableScreenshot(page, 'envy-15-laptop.png', {
-        maskLargeImages: true,
+        maskLargeImages: false,
         minImageWidth: 150,
         minImageHeight: 150,
         // maxDiffPixelRatio: 0.02
