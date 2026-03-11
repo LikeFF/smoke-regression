@@ -152,6 +152,6 @@ test('Smoke: LCS+BasicBanner+UseCaseDrawer+PortViewerv2+SecNav+VCS+ProdModule', 
         maskLargeImages: true,
         minImageWidth: 150,
         minImageHeight: 150,
-        maxDiffPixelRatio: 0.02
+        // maxDiffPixelRatio: 0.02
     });
 });
