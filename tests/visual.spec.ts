@@ -37,6 +37,16 @@ export async function takeStableScreenshot(page: Page, name: string, options: St
         maxDiffPixelRatio
     } = options;
 
+    // 0. Kill all JavaScript timers (setInterval) to stop auto-playing carousels and sliders
+    await page.evaluate(() => {
+        // Create a dummy interval to get the highest current ID,
+        // then clear everything from 0 up to that ID.
+        const highestId = window.setInterval(() => {}, 99999);
+        for (let i = 0; i <= highestId; i++) {
+            window.clearInterval(i);
+        }
+    });
+
     // 1. Force scroll to bottom to trigger all lazy-loaded content
     await page.evaluate(async () => {
         // Pre-emptively disable browser-level lazy loading for all images
