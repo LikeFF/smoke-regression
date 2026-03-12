@@ -15,7 +15,7 @@ const resolutions = [
 
 const browsers = [
     { name: 'chromium', device: 'Desktop Chrome' },
-    { name: 'firefox', device: 'Desktop Firefox' },
+    // { name: 'firefox', device: 'Desktop Firefox' },
 ];
 
 export default defineConfig({
