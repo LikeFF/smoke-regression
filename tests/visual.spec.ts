@@ -167,3 +167,23 @@ test('Smoke: LCS+BasicBanner+UseCaseDrawer+PortViewerv2+SecNav+VCS+ProdModule', 
         // maxDiffPixelRatio: 0.02
     });
 });
+
+test('Collapsible Section', async ({ page }) => {
+    await page.goto('https://publish-stage.hp.com/content/hp-com/language-masters/global-master/en/team-test-content/hp-marketing-demo-pages/lookbook-pages1/collapsible-section.html', {
+        waitUntil: 'domcontentloaded',
+    });
+
+    await takeStableScreenshot(page, 'collapsible-section.png', {
+        maskLargeImages: false,
+    });
+});
+
+test('KSP Carousel', async ({ page }) => {
+    await page.goto('https://publish-stage.hp.com/content/hp-com/language-masters/global-master/en/team-test-content/hp-marketing-demo-pages/lookbook-pages1/ksp-carousel.html', {
+        waitUntil: 'domcontentloaded',
+    });
+
+    await takeStableScreenshot(page, 'ksp-carousel.png', {
+        maskLargeImages: false,
+    });
+});
