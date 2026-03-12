@@ -30,7 +30,7 @@ export default defineConfig({
     expect: {
         toHaveScreenshot: {
             threshold: 0.1, // Pixelmatch threshold (per pixel color tolerance)
-            maxDiffPixelRatio: 0.001, // 0.1% failureThreshold (total tolerable different pixels ratio)
+            maxDiffPixelRatio: 0.0001, // 0.01% failureThreshold (total tolerable different pixels ratio)
         },
     },
 
