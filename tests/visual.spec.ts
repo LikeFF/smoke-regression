@@ -139,12 +139,6 @@ export async function takeStableScreenshot(page: Page, name: string, options: St
     });
 }
 
-test('homepage visual regression', async ({ page }) => {
-    await page.goto('https://playwright.dev/');
-
-    // For the homepage, we might want to test its structure and ignore large dynamic banners.
-    await takeStableScreenshot(page, 'homepage.png', { maskLargeImages: false });
-});
 
 test('SMOKE:HCSv2 + ContentAccordion + BasicTabsSquare + GridContainer', async ({ page }) => {
     await page.goto('https://publish-stage.hp.com/content/hp-com/us-en/industrial-digital-presses.html', {
