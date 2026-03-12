@@ -1,4 +1,5 @@
 name: Playwright Visual Tests
+run-name: ${{ github.event.inputs.update_snapshots == 'true' && '📸 Update Snapshots' || '✅ Visual Regression Check' }}
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
