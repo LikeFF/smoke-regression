@@ -72,7 +72,7 @@ jobs:
         eval $CMD
         
     - name: Commit and push updated snapshots
-      if: ${{ github.event.inputs.update_snapshots == 'true' }}
+      if: ${{ always() && github.event.inputs.update_snapshots == 'true' }}
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
