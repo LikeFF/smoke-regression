@@ -7,6 +7,10 @@ import { defineConfig, devices } from '@playwright/test';
  * Screenshots are organized into folders by resolution and browser.
  */
 
+// Read maxDiffPixelRatio from environment variable (set by CI pipeline), default to 0.01%
+const maxDiffPixelRatio = Number(process.env.MAX_DIFF_PIXEL_RATIO) || 0.0001;
+
+
 const resolutions = [
     { name: 'Desktop-1680x1080', width: 1680, height: 1080 },
     { name: 'Tablet-760x1024', width: 760, height: 1024 },
@@ -30,7 +34,7 @@ export default defineConfig({
     expect: {
         toHaveScreenshot: {
             threshold: 0.1, // Pixelmatch threshold (per pixel color tolerance)
-            maxDiffPixelRatio: 0.0001, // 0.01% failureThreshold (total tolerable different pixels ratio)
+            maxDiffPixelRatio, // 0.01% default, configurable via MAX_DIFF_PIXEL_RATIO env var
         },
     },
 
