@@ -57,7 +57,7 @@ jobs:
         CMD="npx playwright test"
         
         if [ "${{ github.event.inputs.update_snapshots }}" == "true" ]; then
-          CMD="$CMD --update-snapshots"
+          CMD="$CMD --update-snapshots=all"
         fi
         
         if [ -n "${{ github.event.inputs.test_file }}" ]; then
