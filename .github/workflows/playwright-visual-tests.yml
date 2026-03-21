@@ -59,7 +59,7 @@ jobs:
       run: npm ci
 
     - name: Delete old snapshots (for fresh generation)
-      if: ${{ github.event.inputs.update_snapshots == 'true' }}
+      if: ${{ github.event.inputs.update_snapshots == 'true' && github.event.inputs.test_group == 'all' }}
       run: |
         echo "Deleting old snapshots..."
         rm -rf tests/screenshots/
