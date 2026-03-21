@@ -68,6 +68,7 @@ jobs:
     - name: Run Playwright tests
       env:
         MAX_DIFF_PIXEL_RATIO: ${{ github.event.inputs.max_diff_pixel_ratio }}
+        TEST_GROUP: ${{ github.event.inputs.test_group }}
       run: |
         CMD="npx playwright test"
         
@@ -83,13 +84,12 @@ jobs:
           CMD="$CMD -g \"${{ github.event.inputs.test_name }}\""
         fi
         
-        echo "DEBUG: test_group = '${{ github.event.inputs.test_group }}'"
+        echo "DEBUG: TEST_GROUP = '$TEST_GROUP'"
         
-        if [ "${{ github.event.inputs.test_group }}" == "smoke" ]; then
-          CMD="$CMD visual.spec.ts"
-        elif [ "${{ github.event.inputs.test_group }}" == "visid" ]; then
-          CMD="$CMD visid.spec.ts"
-        fi
+        case "$TEST_GROUP" in
+          smoke) CMD="$CMD visual.spec.ts" ;;
+          visid) CMD="$CMD visid.spec.ts" ;;
+        esac
         
         echo "Running: $CMD"
         eval $CMD
