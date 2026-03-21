@@ -83,6 +83,8 @@ jobs:
           CMD="$CMD -g \"${{ github.event.inputs.test_name }}\""
         fi
         
+        echo "DEBUG: test_group = '${{ github.event.inputs.test_group }}'"
+        
         if [ "${{ github.event.inputs.test_group }}" == "smoke" ]; then
           CMD="$CMD visual.spec.ts"
         elif [ "${{ github.event.inputs.test_group }}" == "visid" ]; then
