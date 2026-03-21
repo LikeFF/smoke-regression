@@ -81,8 +81,12 @@ jobs:
         
         if [ -n "${{ github.event.inputs.test_name }}" ]; then
           CMD="$CMD -g \"${{ github.event.inputs.test_name }}\""
-        elif [ "${{ github.event.inputs.test_group }}" != "all" ]; then
-          CMD="$CMD -g \"${{ github.event.inputs.test_group }}\""
+        fi
+        
+        if [ "${{ github.event.inputs.test_group }}" == "smoke" ]; then
+          CMD="$CMD visual.spec.ts"
+        elif [ "${{ github.event.inputs.test_group }}" == "visid" ]; then
+          CMD="$CMD visid.spec.ts"
         fi
         
         echo "Running: $CMD"

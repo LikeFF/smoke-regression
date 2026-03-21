@@ -38,8 +38,8 @@ export default defineConfig({
         },
     },
 
-    /* Snapshot folder structure: tests/screenshots/{resolution}/{browser}/{snapshotName} */
-    snapshotPathTemplate: '{testDir}/screenshots/{projectName}/{arg}{ext}',
+    /* Snapshot folder structure: tests/screenshots/{testFile}/{resolution-browser}/{snapshotName} */
+    snapshotPathTemplate: '{testDir}/screenshots/{testFileName}/{projectName}/{arg}{ext}',
 
     use: {
         trace: 'on-first-retry',
