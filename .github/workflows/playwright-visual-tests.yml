@@ -23,6 +23,14 @@ on:
         description: 'Допустимый % отличающихся пикселей. 0.0001 = 0.01%, 0.001 = 0.1%, 0.01 = 1%. Default: 0.0001 (0.01%)'
         type: string
         default: '0.0001'
+      test_group:
+        description: 'Группа тестов для запуска'
+        type: choice
+        options:
+          - all
+          - smoke
+          - visid
+        default: 'all'
 
 jobs:
   test:
@@ -73,6 +81,8 @@ jobs:
         
         if [ -n "${{ github.event.inputs.test_name }}" ]; then
           CMD="$CMD -g \"${{ github.event.inputs.test_name }}\""
+        elif [ "${{ github.event.inputs.test_group }}" != "all" ]; then
+          CMD="$CMD -g \"${{ github.event.inputs.test_group }}\""
         fi
         
         echo "Running: $CMD"
